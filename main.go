@@ -23,6 +23,8 @@ func main() {
 	}
 	fmt.Println(pong)
 	executeStringCommand()
+	executeListCommand()
+	executeHashCommand()
 }
 func executeStringCommand() {
 	fmt.Println("-------Command start-----")
@@ -40,9 +42,56 @@ func executeStringCommand() {
 		fmt.Println("ERROR: ", err)
 		return
 	}
-	fmt.Println("-----Command End")
+	times, err := rclient.TTL(ctx, "hello").Result()
+	handleResult(times, err)
+	err = rclient.Del(ctx, "hello").Err()
+	if err != nil {
+		fmt.Println("ERROR: ", err)
+		return
+	}
+	val, err = rclient.Get(ctx, "hello").Result()
+	handleResult(val, err)
+	fmt.Println("-----Command End----")
 }
-
+func executeListCommand() {
+	fmt.Println("-------List Command start-----")
+	err := rclient.LPush(ctx, "test", "妳好").Err()
+	if err != nil {
+		fmt.Println("ERROR: ", err)
+		return
+	}
+	list, err := rclient.LRange(ctx, "test", 0, -1).Result()
+	handleResult(list, err)
+	val, err := rclient.LPop(ctx, "test").Result()
+	handleResult(val, err)
+	list, err = rclient.LRange(ctx, "test", 0, -1).Result()
+	handleResult(list, err)
+	err = rclient.Del(ctx, "test").Err()
+	if err != nil {
+		fmt.Println("ERROR: ", err)
+		return
+	}
+	list, err = rclient.LRange(ctx, "test", 0, -1).Result()
+	handleResult(list, err)
+	fmt.Println("-------List Command End-----")
+}
+func executeHashCommand() {
+	fmt.Println("-------Hash Command start-----")
+	// k := []string{"1", "2", "3"}
+	m := map[string]string{
+		"a": "b",
+		"c": "d",
+		"e": "f",
+	}
+	err := rclient.HSet(ctx, "k", m).Err()
+	if err != nil {
+		fmt.Println("ERROR123: ", err)
+		return
+	}
+	val, err := rclient.HGet(ctx, "k", "a").Result()
+	handleResult(val, err)
+	fmt.Println("-------Hash Command End-----")
+}
 func handleResult(result interface{}, err error) {
 	if err != nil {
 		fmt.Println("ERROR: ", err)
